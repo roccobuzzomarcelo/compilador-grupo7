@@ -1,0 +1,62 @@
+//* Teoria de la Computacion I - UNLu - Grupo 7
+    Archivo de pruebas generales del compilador *//
+
+DECLARE.SECTION
+    [a1, b1, cont] := [FLOAT, INT, INT]
+    [p1, total, nombre] := [FLOAT, FLOAT, STRING]
+ENDDECLARE.SECTION
+
+PROGRAM.SECTION
+
+    //* Asi son los comentarios *//
+
+    //* Asignaciones y constantes numericas *//
+    cont ::= 0
+    b1 ::= 55
+    a1 ::= 99999.99
+    a1 ::= 99.
+    p1 ::= .9999
+    total ::= (a1 + p1) * 2 - b1 / 4
+
+    //* Constantes string *//
+    nombre ::= "HOLA MUNDO"
+
+    //* Salidas *//
+    WRITE "@sdADaSjfla%dfg"
+    write "ewr"
+    write 99.999
+    write total
+
+    //* Decisiones: condicion simple, con AND y con OR *//
+    IF (a1 <= 30)
+        b1 ::= 1
+    ELSE
+        b1 ::= 2
+    ENDIF
+
+    IF ((a1 >= 10) AND (b1 < 100))
+        write "en rango"
+    ENDIF
+
+    IF ((cont == 0) OR (b1 > 32767))
+        cont ::= 1
+    ENDIF
+
+    //* Ciclo *//
+    WHILE (cont < 10)
+        cont ::= cont + 1
+    ENDWHILE
+
+    //*
+    Comentario con un nivel de anidamiento:
+    IF (a <= 30)
+        b ::= "correcto" //* asignacion string *//
+    ENDIF
+    *//
+
+    //* Tema especial del Grupo 7: APLICARDESCUENTO *//
+    APLICARDESCUENTO(27, [500, 305, 79.4, 10])
+    APLICARDESCUENTO(12.5, [1000, 250.75])
+    APLICARDESCUENTO(50, [])
+
+ENDPROGRAM.SECTION

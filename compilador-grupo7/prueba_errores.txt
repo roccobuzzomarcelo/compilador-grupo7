@@ -1,0 +1,31 @@
+//* Casos de error lexico. Cada linea deberia informar un error. *//
+
+PROGRAM.SECTION
+
+    //* Constante entera fuera del rango de 16 bits *//
+    a ::= 40000
+
+    //* Constante real fuera del rango de 32 bits *//
+    b ::= 99999999999999999999999999999999999999999.5
+
+    //* Constante string de mas de 30 caracteres *//
+    c ::= "esta constante string supera el limite permitido"
+
+    //* Constante string sin comilla de cierre *//
+    d ::= "sin cerrar
+
+    //* Caracteres que no pertenecen al lenguaje *//
+    e ::= 5 $ 3
+    f ::= a ; b
+
+    //* Punto suelto: no es una constante *//
+    h ::= .
+
+    //* Cierre de comentario sin apertura *//
+    *//
+
+    //* nivel 0 //* nivel 1 //* nivel 2: no permitido *// sigue nivel 1 *// sigue nivel 0 *//
+
+ENDPROGRAM.SECTION
+
+//* Comentario que nunca se cierra
