@@ -16,7 +16,7 @@ PROGRAM.SECTION
 
     //* Caracteres que no pertenecen al lenguaje *//
     e ::= 5 $ 3
-    f ::= a ; b
+    f ::= a # b
 
     //* Punto suelto: no es una constante *//
     h ::= .

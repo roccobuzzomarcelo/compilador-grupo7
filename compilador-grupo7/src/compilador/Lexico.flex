@@ -74,7 +74,9 @@ ALFANUMERICO = {LETRA} | {DIGITO}
 
 /* ------------------- Identificadores y constantes -------------------- */
 
-ID      = {LETRA} {ALFANUMERICO}*
+/* ID: comienza con letra, puede llevar guión medio, pero debe terminar en letra o dígito.
+   La alternancia con {LETRA} sola conserva los identificadores de un solo carácter. */
+ID      = {LETRA} | {LETRA} ({LETRA} | {DIGITO} | "-")* ({LETRA} | {DIGITO})
 CTE_E   = {DIGITO}+
 CTE_F   = {DIGITO}+ "." {DIGITO}* | "." {DIGITO}+
 CTE_STR = \" [^\"\r\n]* \"
@@ -102,6 +104,7 @@ BLANCOS = [ \t\r\n]+
     "IF"                    { return token("IF"); }
     "ELSE"                  { return token("ELSE"); }
     "ENDIF"                 { return token("ENDIF"); }
+    "THEN"                  { return token("THEN"); }
     "WRITE" | "write"       { return token("WRITE"); }
     "INT"                   { return token("INT"); }
     "FLOAT"                 { return token("FLOAT"); }
@@ -118,6 +121,7 @@ BLANCOS = [ \t\r\n]+
     ">="                    { return token("OP_MAYOR_IGUAL"); }
     ">"                     { return token("OP_MAYOR"); }
     "=="                    { return token("OP_IGUAL"); }
+    "!="                    { return token("OP_DISTINTO"); }
     "+"                     { return token("OP_SUMA"); }
     "-"                     { return token("OP_RESTA"); }
     "*"                     { return token("OP_MULT"); }
@@ -128,7 +132,10 @@ BLANCOS = [ \t\r\n]+
     ")"                     { return token("PAREN_DER"); }
     "["                     { return token("CORCHETE_IZQ"); }
     "]"                     { return token("CORCHETE_DER"); }
+    "{"                     { return token("LLAVE_IZQ"); }
+    "}"                     { return token("LLAVE_DER"); }
     ","                     { return token("COMA"); }
+    ";"                     { return token("PUNTO_Y_COMA"); }
 
     /* ---- Identificadores ---- */
     {ID}                    {
