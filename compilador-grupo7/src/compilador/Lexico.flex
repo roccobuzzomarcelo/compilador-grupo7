@@ -74,15 +74,23 @@ ALFANUMERICO = {LETRA} | {DIGITO}
 
 /* ------------------- Identificadores y constantes -------------------- */
 
-/* ID: comienza con letra, puede llevar guión medio, pero debe terminar en letra o dígito.
-   La alternancia con {LETRA} sola conserva los identificadores de un solo carácter. */
-ID      = {LETRA} | {LETRA} ({LETRA} | {DIGITO} | "-")* ({LETRA} | {DIGITO})
+/* ID: comienza con letra, puede llevar guión medio o guión bajo, pero debe terminar
+   en letra o dígito. La alternancia con {LETRA} sola conserva los identificadores
+   de un solo carácter. */
+ID      = {LETRA} | {LETRA} ({LETRA} | {DIGITO} | "-" | "_")* ({LETRA} | {DIGITO})
 CTE_E   = {DIGITO}+
 CTE_F   = {DIGITO}+ "." {DIGITO}* | "." {DIGITO}+
-CTE_STR = \" [^\"\r\n]* \"
+/* Caracteres permitidos dentro de una constante string, según CHECK_REGEX:
+   letras, dígitos, blancos (incluyendo saltos de línea), los signos , : ; ,
+   los operadores + - * / < > = ! , el punto, ¡ y ñ Ñ. */
+CARACTER_STR = [ \t\r\n,:;+\-*/<>=!.¡ñÑA-Za-z0-9]
+CTE_STR      = \" {CARACTER_STR}* \"
 
-/* String que llega al fin de línea sin la comilla de cierre */
-STR_SIN_CERRAR = \" [^\"\r\n]*
+/* String con caracteres no permitidos (abre y cierra pero contiene algo fuera del alfabeto) */
+STR_INVALIDO = \" [^\"]* \"
+
+/* String sin comilla de cierre (llega al EOF sin cerrar) */
+STR_SIN_CERRAR = \" [^\"]*
 
 /* ----------------------------- Blancos ------------------------------- */
 
@@ -179,6 +187,8 @@ BLANCOS = [ \t\r\n]+
                                         "CTE_STR", contenido, Integer.valueOf(contenido.length()));
                                 return token("CTE_STR");
                             }
+
+    {STR_INVALIDO}          { return error("Constante string con caracteres no permitidos: " + yytext()); }
 
     {STR_SIN_CERRAR}        { return error("Constante string sin comilla de cierre: " + yytext()); }
 

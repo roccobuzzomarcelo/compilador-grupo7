@@ -11,6 +11,9 @@ PROGRAM.SECTION
     //* Constante string de mas de 30 caracteres *//
     c ::= "esta constante string supera el limite permitido"
 
+    //* Constante string con caracteres no permitidos *//
+    g ::= "contiene @ y % no validos"
+
     //* Constante string sin comilla de cierre *//
     d ::= "sin cerrar
 
