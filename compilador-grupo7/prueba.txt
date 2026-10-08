@@ -4,7 +4,6 @@
 DECLARE.SECTION
     [a1, b1, cont] := [FLOAT, INT, INT]
     [p1, total, nombre] := [FLOAT, FLOAT, STRING]
-    [precio_final, descuento-aplicado] := [FLOAT, FLOAT]
 ENDDECLARE.SECTION
 
 PROGRAM.SECTION
@@ -17,6 +16,7 @@ PROGRAM.SECTION
     a1 ::= 99999.99
     a1 ::= 99.
     p1 ::= .9999
+    p1 ::= a1
     total ::= (a1 + p1) * 2 - b1 / 4
 
     //* Constantes string *//
@@ -29,7 +29,7 @@ PROGRAM.SECTION
     write total
 
     //* Decisiones: condicion simple, con AND y con OR *//
-    IF (a1 <= 30) THEN
+    IF (a1 <= 30)
         b1 ::= 1
     ELSE
         b1 ::= 2
@@ -41,11 +41,6 @@ PROGRAM.SECTION
 
     IF ((cont == 0) OR (b1 > 32767))
         cont ::= 1
-    ENDIF
-
-    //* Comparacion de distinto y uso de llaves y punto y coma *//
-    IF (cont != 0) THEN
-        { b1 ::= 10 ; cont ::= 0 }
     ENDIF
 
     //* Ciclo *//
@@ -64,9 +59,5 @@ PROGRAM.SECTION
     APLICARDESCUENTO(27, [500, 305, 79.4, 10])
     APLICARDESCUENTO(12.5, [1000, 250.75])
     APLICARDESCUENTO(50, [])
-
-    //* Identificadores con guion medio y guion bajo *//
-    precio_final ::= 1000
-    descuento-aplicado ::= 15.5
 
 ENDPROGRAM.SECTION

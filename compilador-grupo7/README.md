@@ -19,7 +19,7 @@ Trabajo Práctico Integrador de **Teoría de la Computación I** – Universidad
 
 Requiere Java 8 o superior.
 
-```
+```powershell
 java -jar Compilador.jar
 ```
 
@@ -33,7 +33,7 @@ En la ventana:
 
 También se puede analizar un archivo por consola, sin abrir la ventana:
 
-```
+```powershell
 java -jar Compilador.jar prueba.txt
 ```
 
@@ -60,7 +60,7 @@ java -jar Compilador.jar prueba.txt
 
 ### Definiciones auxiliares
 
-```
+```java
 DIGITO       = [0-9]
 LETRA        = [A-Za-z]
 ALFANUMERICO = {LETRA} | {DIGITO}
@@ -100,7 +100,7 @@ En `Lexico.flex` estas reglas están antes que la de `ID`, para que tengan prior
 
 Se delimitan con `//*` y `*//` y admiten un solo nivel de anidamiento. No generan token.
 
-```
+```java
 //* comentario simple *//
 
 //* comentario exterior
@@ -142,7 +142,7 @@ En el nombre de una constante string los espacios se reemplazan por guion bajo: 
 
 Ejemplo de `ts.txt`:
 
-```
+```txt
 NOMBRE       TOKEN     TIPO    VALOR       LONG
 a1           ID        -       -           -
 _55          CTE_E     -       55          -
@@ -154,7 +154,7 @@ _HOLA_MUNDO  CTE_STR   -       HOLA MUNDO  10
 
 La función recibe un porcentaje de descuento y una lista de precios:
 
-```
+```java
 APLICARDESCUENTO(27, [500, 305, 79.4, 10])
 APLICARDESCUENTO(50, [])
 ```
@@ -167,7 +167,7 @@ El rango de 0 a 100 del porcentaje y el caso de lista vacía son validaciones de
 
 Requiere un JDK 8 o superior en el PATH.
 
-```
+```powershell
 ./build.sh      (Linux / macOS)
 build.bat       (Windows)
 ```
