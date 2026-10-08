@@ -86,11 +86,12 @@ CTE_F   = {DIGITO}+ "." {DIGITO}* | "." {DIGITO}+
 CARACTER_STR = [ \t\r\n,:;+\-*/<>=!.¡ñÑA-Za-z0-9]
 CTE_STR      = \" {CARACTER_STR}* \"
 
-/* String con caracteres no permitidos (abre y cierra pero contiene algo fuera del alfabeto) */
-STR_INVALIDO = \" [^\"]* \"
+/* String con caracteres no permitidos: se acota a una sola línea para no tragarse
+   el resto del archivo cuando aparece un carácter inválido suelto. */
+STR_INVALIDO = \" [^\"\r\n]* \"
 
-/* String sin comilla de cierre (llega al EOF sin cerrar) */
-STR_SIN_CERRAR = \" [^\"]*
+/* String sin comilla de cierre antes del fin de línea */
+STR_SIN_CERRAR = \" [^\"\r\n]*
 
 /* ----------------------------- Blancos ------------------------------- */
 

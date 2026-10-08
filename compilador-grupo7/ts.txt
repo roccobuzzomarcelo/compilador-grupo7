@@ -2,6 +2,7 @@ NOMBRE  TOKEN     TIPO    VALOR  LONG
 a       ID        -       -      -
 b       ID        -       -      -
 c       ID        -       -      -
+g       ID        -       -      -
 d       ID        -       -      -
 e       ID        -       -      -
 _5      CTE_E     -       5      -
