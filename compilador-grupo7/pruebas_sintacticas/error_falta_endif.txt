@@ -1,0 +1,5 @@
+//* IF sin ENDIF: llega al fin de archivo *//
+PROGRAM.SECTION
+    IF (a < 1)
+        a ::= 2
+ENDPROGRAM.SECTION

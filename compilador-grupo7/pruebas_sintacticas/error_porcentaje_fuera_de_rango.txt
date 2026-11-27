@@ -1,0 +1,5 @@
+//* Porcentaje mayor a 100: error semantico, el analisis continua *//
+PROGRAM.SECTION
+    APLICARDESCUENTO(150, [500, 305])
+    APLICARDESCUENTO(27, [500])
+ENDPROGRAM.SECTION

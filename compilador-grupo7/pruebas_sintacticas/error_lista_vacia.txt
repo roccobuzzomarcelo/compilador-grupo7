@@ -1,0 +1,5 @@
+//* Lista de precios vacia: error sintactico *//
+PROGRAM.SECTION
+    APLICARDESCUENTO(27, [500, 305])
+    APLICARDESCUENTO(50, [])
+ENDPROGRAM.SECTION

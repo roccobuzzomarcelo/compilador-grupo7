@@ -58,6 +58,10 @@ PROGRAM.SECTION
     //* Tema especial del Grupo 7: APLICARDESCUENTO *//
     APLICARDESCUENTO(27, [500, 305, 79.4, 10])
     APLICARDESCUENTO(12.5, [1000, 250.75])
-    APLICARDESCUENTO(50, [])
+    APLICARDESCUENTO(100, [80])
+    APLICARDESCUENTO(0, [.5, 99.])
+
+    //* APLICARDESCUENTO(50, []) da error sintactico (lista vacia) y corta
+        la compilacion: esta en pruebas_sintacticas/error_lista_vacia.txt *//
 
 ENDPROGRAM.SECTION

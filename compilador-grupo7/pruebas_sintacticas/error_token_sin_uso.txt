@@ -1,0 +1,6 @@
+//* THEN es un token del lexico que no aparece en la gramatica *//
+PROGRAM.SECTION
+    IF (a < 1) THEN
+        a ::= 2
+    ENDIF
+ENDPROGRAM.SECTION

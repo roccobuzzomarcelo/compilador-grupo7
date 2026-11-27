@@ -1,0 +1,5 @@
+//* WRITE solo acepta constantes y variables *//
+PROGRAM.SECTION
+    write total
+    write total + 1
+ENDPROGRAM.SECTION

@@ -1,32 +1,33 @@
 NOMBRE             TOKEN     TIPO    VALOR             LONG
-a1                 ID        -       -                 -
-b1                 ID        -       -                 -
-cont               ID        -       -                 -
-p1                 ID        -       -                 -
-total              ID        -       -                 -
-nombre             ID        -       -                 -
-_0                 CTE_E     -       0                 -
-_55                CTE_E     -       55                -
-_99999.99          CTE_F     -       99999.99          -
-_99.               CTE_F     -       99.               -
-_.9999             CTE_F     -       .9999             -
-_2                 CTE_E     -       2                 -
-_4                 CTE_E     -       4                 -
-_HOLA_MUNDO        CTE_STR   -       HOLA MUNDO        10
-_hola_mundo,_123!  CTE_STR   -       hola mundo, 123!  16
-_ewr               CTE_STR   -       ewr               3
-_99.999            CTE_F     -       99.999            -
-_30                CTE_E     -       30                -
-_1                 CTE_E     -       1                 -
-_10                CTE_E     -       10                -
-_100               CTE_E     -       100               -
-_en_rango          CTE_STR   -       en rango          8
-_32767             CTE_E     -       32767             -
-_27                CTE_E     -       27                -
-_500               CTE_E     -       500               -
-_305               CTE_E     -       305               -
-_79.4              CTE_F     -       79.4              -
-_12.5              CTE_F     -       12.5              -
-_1000              CTE_E     -       1000              -
-_250.75            CTE_F     -       250.75            -
-_50                CTE_E     -       50                -
+a1                 ID        FLOAT   -                 -
+b1                 ID        INT     -                 -
+cont               ID        INT     -                 -
+p1                 ID        FLOAT   -                 -
+total              ID        FLOAT   -                 -
+nombre             ID        STRING  -                 -
+_0                 CTE_E     INT     0                 -
+_55                CTE_E     INT     55                -
+_99999.99          CTE_F     FLOAT   99999.99          -
+_99.               CTE_F     FLOAT   99.               -
+_.9999             CTE_F     FLOAT   .9999             -
+_2                 CTE_E     INT     2                 -
+_4                 CTE_E     INT     4                 -
+_HOLA_MUNDO        CTE_STR   STRING  HOLA MUNDO        10
+_hola_mundo,_123!  CTE_STR   STRING  hola mundo, 123!  16
+_ewr               CTE_STR   STRING  ewr               3
+_99.999            CTE_F     FLOAT   99.999            -
+_30                CTE_E     INT     30                -
+_1                 CTE_E     INT     1                 -
+_10                CTE_E     INT     10                -
+_100               CTE_E     INT     100               -
+_en_rango          CTE_STR   STRING  en rango          8
+_32767             CTE_E     INT     32767             -
+_27                CTE_E     INT     27                -
+_500               CTE_E     INT     500               -
+_305               CTE_E     INT     305               -
+_79.4              CTE_F     FLOAT   79.4              -
+_12.5              CTE_F     FLOAT   12.5              -
+_1000              CTE_E     INT     1000              -
+_250.75            CTE_F     FLOAT   250.75            -
+_80                CTE_E     INT     80                -
+_.5                CTE_F     FLOAT   .5                -

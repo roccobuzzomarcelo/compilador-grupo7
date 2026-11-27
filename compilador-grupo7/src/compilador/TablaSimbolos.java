@@ -10,7 +10,8 @@ import java.util.Map;
 /**
  * Tabla de símbolos: guarda identificadores y constantes sin repetir.
  * Columnas: NOMBRE, TOKEN, TIPO, VALOR, LONG.
- * En la primera entrega la columna TIPO queda vacía.
+ * TIPO: el tipo declarado de los identificadores (lo carga el sintáctico)
+ * y el tipo de cada constante según su token.
  */
 public class TablaSimbolos {
 
@@ -42,11 +43,29 @@ public class TablaSimbolos {
         }
     }
 
-    /** Las constantes guardan su valor; las string, además, su longitud. */
+    /** Las constantes guardan su valor; las string, además, su longitud. El tipo sale del token. */
     public void agregarConstante(String nombre, String token, String valor, Integer longitud) {
         if (!simbolos.containsKey(nombre)) {
             String lon = (longitud == null) ? VACIO : String.valueOf(longitud);
-            simbolos.put(nombre, new Simbolo(nombre, token, VACIO, valor, lon));
+            simbolos.put(nombre, new Simbolo(nombre, token, tipoDeConstante(token), valor, lon));
+        }
+    }
+
+    private static String tipoDeConstante(String token) {
+        if (token.equals("CTE_E")) {
+            return "INT";
+        }
+        if (token.equals("CTE_F")) {
+            return "FLOAT";
+        }
+        return "STRING";
+    }
+
+    /** Guarda el tipo declarado de un identificador (lo llama el analizador sintáctico). */
+    public void asignarTipo(String nombre, String tipo) {
+        Simbolo s = simbolos.get(nombre);
+        if (s != null) {
+            s.tipo = tipo;
         }
     }
 

@@ -1,0 +1,7 @@
+//* Hay mas tipos que variables *//
+DECLARE.SECTION
+    [a, b] := [INT, FLOAT, STRING]
+ENDDECLARE.SECTION
+PROGRAM.SECTION
+    a ::= 1
+ENDPROGRAM.SECTION

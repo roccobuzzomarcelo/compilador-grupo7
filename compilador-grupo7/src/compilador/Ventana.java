@@ -60,8 +60,8 @@ import javax.swing.text.StyledDocument;
 
 /**
  * IDE del compilador: editor de código con resaltado de sintaxis, carga y
- * guardado de archivos, y compilación (análisis léxico) con salida de tokens,
- * errores y tabla de símbolos.
+ * guardado de archivos, y compilación (análisis léxico y sintáctico) con salida
+ * de tokens, reglas sintácticas reconocidas, errores y tabla de símbolos.
  */
 public class Ventana extends JFrame {
 
@@ -110,6 +110,7 @@ public class Ventana extends JFrame {
     private final JTextPane editor = new PanelSinAjuste();
     private final JTextArea numerosDeLinea = new JTextArea("1");
     private final JTextPane salida = new PanelSinAjuste();
+    private final JTextPane salidaReglas = new PanelSinAjuste();
     private final DefaultTableModel modeloTabla = new DefaultTableModel(
             new Object[] { "NOMBRE", "TOKEN", "TIPO", "VALOR", "LONG" }, 0) {
         public boolean isCellEditable(int fila, int columna) {
@@ -119,6 +120,7 @@ public class Ventana extends JFrame {
     private final CardLayout tarjetas = new CardLayout();
     private final JPanel panelSalida = new JPanel(tarjetas);
     private final BotonPlano pestaniaSalida = new BotonPlano("Tokens y errores", BotonPlano.PESTANIA);
+    private final BotonPlano pestaniaReglas = new BotonPlano("Reglas sintácticas", BotonPlano.PESTANIA);
     private final BotonPlano pestaniaTabla = new BotonPlano("Tabla de símbolos", BotonPlano.PESTANIA);
     private final JLabel estado = new JLabel("Listo");
     private final JFileChooser selector = new JFileChooser(new File("."));
@@ -199,7 +201,7 @@ public class Ventana extends JFrame {
         }));
 
         JMenu compilador = new JMenu("Compilador");
-        JMenuItem compilar = new JMenuItem("Compilar (análisis léxico)");
+        JMenuItem compilar = new JMenuItem("Compilar (análisis léxico y sintáctico)");
         compilar.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
         compilar.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) { compilar(); }
@@ -295,6 +297,16 @@ public class Ventana extends JFrame {
         desplazamientoSalida.setBorder(null);
         desplazamientoSalida.getViewport().setBackground(PAPEL);
 
+        /* ---- Salida: reglas sintácticas ---- */
+        salidaReglas.setFont(FUENTE_CODIGO);
+        salidaReglas.setEditable(false);
+        salidaReglas.setBackground(PAPEL);
+        salidaReglas.setForeground(TINTA);
+        salidaReglas.setMargin(new Insets(6, 8, 6, 8));
+        JScrollPane desplazamientoReglas = new JScrollPane(salidaReglas);
+        desplazamientoReglas.setBorder(null);
+        desplazamientoReglas.getViewport().setBackground(PAPEL);
+
         /* ---- Tabla de símbolos ---- */
         JTable tabla = new JTable(modeloTabla);
         tabla.setFont(FUENTE_CODIGO);
@@ -335,22 +347,28 @@ public class Ventana extends JFrame {
         desplazamientoTabla.setBorder(null);
         desplazamientoTabla.getViewport().setBackground(PAPEL);
 
-        panelSalida.add(desplazamientoSalida, "salida");
-        panelSalida.add(desplazamientoTabla, "tabla");
+        panelSalida.add(desplazamientoSalida, SALIDA);
+        panelSalida.add(desplazamientoReglas, REGLAS);
+        panelSalida.add(desplazamientoTabla, TABLA);
         panelSalida.setBorder(BorderFactory.createLineBorder(TINTA, 2));
 
         pestaniaSalida.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) { mostrarPestania(true); }
+            public void actionPerformed(ActionEvent e) { mostrarPestania(SALIDA); }
+        });
+        pestaniaReglas.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) { mostrarPestania(REGLAS); }
         });
         pestaniaTabla.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) { mostrarPestania(false); }
+            public void actionPerformed(ActionEvent e) { mostrarPestania(TABLA); }
         });
         JPanel pestanias = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         pestanias.setOpaque(false);
         pestanias.add(pestaniaSalida);
         pestanias.add(javax.swing.Box.createHorizontalStrut(6));
+        pestanias.add(pestaniaReglas);
+        pestanias.add(javax.swing.Box.createHorizontalStrut(6));
         pestanias.add(pestaniaTabla);
-        mostrarPestania(true);
+        mostrarPestania(SALIDA);
 
         JPanel panelInferior = new JPanel(new BorderLayout(0, 6));
         panelInferior.setOpaque(false);
@@ -391,10 +409,15 @@ public class Ventana extends JFrame {
         return barra;
     }
 
-    private void mostrarPestania(boolean salidaVisible) {
-        tarjetas.show(panelSalida, salidaVisible ? "salida" : "tabla");
-        pestaniaSalida.setSeleccionado(salidaVisible);
-        pestaniaTabla.setSeleccionado(!salidaVisible);
+    private static final String SALIDA = "salida";
+    private static final String REGLAS = "reglas";
+    private static final String TABLA = "tabla";
+
+    private void mostrarPestania(String nombre) {
+        tarjetas.show(panelSalida, nombre);
+        pestaniaSalida.setSeleccionado(nombre.equals(SALIDA));
+        pestaniaReglas.setSeleccionado(nombre.equals(REGLAS));
+        pestaniaTabla.setSeleccionado(nombre.equals(TABLA));
     }
 
     /* ==================== Editor: números y colores ================== */
@@ -477,6 +500,7 @@ public class Ventana extends JFrame {
     private void nuevo() {
         editor.setText("");
         salida.setText("");
+        salidaReglas.setText("");
         modeloTabla.setRowCount(0);
         archivoActual = null;
         setTitle(TITULO);
@@ -525,8 +549,9 @@ public class Ventana extends JFrame {
 
     private void compilar() {
         try {
-            Analizador.Resultado resultado = Analizador.analizar(textoDelEditor());
+            Analizador.Resultado resultado = Analizador.compilar(textoDelEditor());
             escribirSalida(resultado);
+            escribirReglas(resultado);
 
             modeloTabla.setRowCount(0);
             for (TablaSimbolos.Simbolo s : resultado.tabla.getSimbolos()) {
@@ -539,11 +564,10 @@ public class Ventana extends JFrame {
             File ts = new File(carpeta, "ts.txt");
             resultado.tabla.guardar(ts.getPath());
 
-            mostrarPestania(true);
-            estado.setForeground(resultado.cantidadErrores > 0 ? new Color(0xFFB59A) : TURQUESA);
-            estado.setText("Compilación finalizada: " + resultado.cantidadTokens + " tokens, "
-                    + resultado.cantidadErrores + " errores. Tabla de símbolos en "
-                    + ts.getCanonicalPath());
+            /* con errores léxicos se muestran los tokens; si no, las reglas */
+            mostrarPestania(resultado.sintacticoEjecutado ? REGLAS : SALIDA);
+            estado.setForeground(resultado.sintacticoCorrecto() ? TURQUESA : new Color(0xFFB59A));
+            estado.setText(resultado.resumenSintactico() + " Tabla de símbolos en " + ts.getCanonicalPath());
         } catch (IOException e) {
             mostrarError("Error durante la compilación:\n" + e.getMessage());
         }
@@ -572,6 +596,29 @@ public class Ventana extends JFrame {
             salida.setText(resultado.comoTexto());
         }
         salida.setCaretPosition(0);
+    }
+
+    /** Escribe las reglas reconocidas, los resultados de APLICARDESCUENTO y los errores. */
+    private void escribirReglas(Analizador.Resultado resultado) {
+        salidaReglas.setText("");
+        StyledDocument documento = salidaReglas.getStyledDocument();
+        try {
+            for (Mensaje m : resultado.mensajes) {
+                if (m.tipo == Mensaje.ERROR) {
+                    agregar(documento, m.comoTexto() + "\n", estiloErrorSalida);
+                } else if (m.tipo == Mensaje.RESULTADO) {
+                    agregar(documento, m.comoTexto() + "\n", estiloNumero);
+                } else {
+                    agregar(documento, String.format("Línea %-4d ", m.linea), estiloLinea);
+                    agregar(documento, m.texto + "\n", estiloNormal);
+                }
+            }
+            agregar(documento, (resultado.mensajes.isEmpty() ? "" : "\n") + resultado.resumenSintactico() + "\n",
+                    resultado.sintacticoCorrecto() ? estiloResumen : estiloErrorSalida);
+        } catch (BadLocationException e) {
+            salidaReglas.setText(resultado.reglasComoTexto());
+        }
+        salidaReglas.setCaretPosition(0);
     }
 
     private void agregar(StyledDocument documento, String texto, SimpleAttributeSet estilo)

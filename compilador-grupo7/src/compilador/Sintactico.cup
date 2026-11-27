@@ -1,0 +1,336 @@
+/* =====================================================================
+   Teoría de la Computación I - UNLu
+   Trabajo Práctico Integrador - Compilador 2026
+   Grupo 7 - Tema especial: APLICARDESCUENTO
+   Segunda entrega: analizador sintáctico
+   La numeración de las reglas es la de la GLC (GLC.md / Especificacion_Grupo7.md).
+   ===================================================================== */
+
+package compilador;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
+
+parser code {:
+
+    /** Variables y tipos de una declaración, en el orden en que se escribieron. */
+    public static class Declaracion {
+        public final List<String> ids = new ArrayList<String>();
+        public final List<String> tipos = new ArrayList<String>();
+    }
+
+    /** Reglas reconocidas, resultados y errores, en el orden en que ocurren. */
+    public final List<Mensaje> mensajes = new ArrayList<Mensaje>();
+    public int cantidadReglas = 0;
+    public int erroresSemanticos = 0;
+
+    private TablaSimbolos tabla;
+
+    public void setTabla(TablaSimbolos tabla) {
+        this.tabla = tabla;
+    }
+
+    void regla(int numero, int linea, String texto) {
+        cantidadReglas++;
+        mensajes.add(new Mensaje(Mensaje.REGLA, linea, String.format("Regla %2d: %s", numero, texto)));
+    }
+
+    void resultado(int linea, String texto) {
+        mensajes.add(new Mensaje(Mensaje.RESULTADO, linea, texto));
+    }
+
+    void errorSemantico(int linea, String texto) {
+        erroresSemanticos++;
+        mensajes.add(new Mensaje(Mensaje.ERROR, linea, "ERROR SEMÁNTICO: " + texto));
+    }
+
+    /* ---------------------- Acciones semánticas ---------------------- */
+
+    /* Regla 6: guarda el tipo de cada variable en la tabla de símbolos. */
+    void declarar(int linea, Declaracion d) {
+        StringBuilder sb = new StringBuilder("Tipos asignados: ");
+        for (int i = 0; i < d.ids.size(); i++) {
+            tabla.asignarTipo(d.ids.get(i), d.tipos.get(i));
+            sb.append(i > 0 ? ", " : "").append(d.ids.get(i)).append(" -> ").append(d.tipos.get(i));
+        }
+        resultado(linea, sb.toString());
+    }
+
+    /* Regla 49: valida el porcentaje y muestra cada precio con el descuento aplicado. */
+    void aplicarDescuento(int linea, String porcentaje, List<String> precios) {
+        BigDecimal pct = new BigDecimal(normalizar(porcentaje));
+        if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal(100)) > 0) {
+            errorSemantico(linea, "el porcentaje de descuento debe estar entre 0 y 100 (se recibió "
+                    + porcentaje + ")");
+            return;
+        }
+        BigDecimal cien = new BigDecimal(100);
+        for (int i = 0; i < precios.size(); i++) {
+            String lexema = precios.get(i);
+            BigDecimal precio = new BigDecimal(normalizar(lexema));
+            BigDecimal descuento = precio.multiply(pct).divide(cien, 10, RoundingMode.HALF_UP);
+            BigDecimal precioFinal = precio.subtract(descuento);
+            resultado(linea, String.format("Precio %d: %s - %s*%s/100 = %s", i + 1, lexema, lexema,
+                    porcentaje, formatear(precioFinal)));
+        }
+    }
+
+    /* "99." y ".5" son constantes válidas, pero BigDecimal necesita "99.0" y "0.5" */
+    private static String normalizar(String lexema) {
+        String s = lexema.startsWith(".") ? "0" + lexema : lexema;
+        return s.endsWith(".") ? s + "0" : s;
+    }
+
+    /* Hasta dos decimales y sin ceros de más: 365, 222.65, 57.96, 7.3 */
+    private static String formatear(BigDecimal valor) {
+        BigDecimal redondeado = valor.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
+        return redondeado.signum() == 0 ? "0" : redondeado.toPlainString();
+    }
+
+    /* ------------------------ Errores sintácticos --------------------- */
+
+    private ErrorSintactico error;
+
+    /** Arma el mensaje del primer error sintáctico. */
+    public void syntax_error(java_cup.runtime.Symbol actual) {
+        LexicoCup lexico = (LexicoCup) getScanner();
+        Token t = lexico.anterior(0);
+        Token previo = lexico.anterior(1);
+        Token antePrevio = lexico.anterior(2);
+        if (t == null) {
+            int linea = (previo != null) ? previo.linea : 1;
+            error = new ErrorSintactico(linea, "ERROR SINTÁCTICO: fin de archivo inesperado"
+                    + " (falta completar o cerrar una estructura, por ejemplo ENDPROGRAM.SECTION)");
+        } else if (t.nombre.equals("CORCHETE_DER") && previo != null && previo.nombre.equals("CORCHETE_IZQ")
+                && antePrevio != null && antePrevio.nombre.equals("COMA")) {
+            /* ", [ ]" solo puede aparecer en APLICARDESCUENTO */
+            error = new ErrorSintactico(t.linea, "ERROR SINTÁCTICO: lista vacía en APLICARDESCUENTO"
+                    + " (la lista de precios debe tener al menos un precio)");
+        } else {
+            error = new ErrorSintactico(t.linea, "ERROR SINTÁCTICO: token inesperado '" + t.lexema
+                    + "' (" + t.nombre + ") en la columna " + t.columna);
+        }
+    }
+
+    /** No hay recuperación de errores: la compilación se corta en el primer error. */
+    public void unrecovered_syntax_error(java_cup.runtime.Symbol actual) throws ErrorSintactico {
+        if (error == null) {
+            error = new ErrorSintactico(0, "ERROR SINTÁCTICO");
+        }
+        mensajes.add(new Mensaje(Mensaje.ERROR, error.linea, error.getMessage()));
+        throw error;
+    }
+:};
+
+/* ============================ Terminales ============================ */
+
+terminal String DECLARE_SECTION, ENDDECLARE_SECTION, PROGRAM_SECTION, ENDPROGRAM_SECTION;
+terminal String WHILE, ENDWHILE, IF, ELSE, ENDIF, WRITE, INT, FLOAT, STRING, AND, OR;
+terminal String APLICARDESCUENTO;
+terminal String OP_ASIGNACION, OP_DECL_TIPO;
+terminal String OP_MENOR, OP_MENOR_IGUAL, OP_MAYOR, OP_MAYOR_IGUAL, OP_IGUAL, OP_DISTINTO;
+terminal String OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
+terminal String PAREN_IZQ, PAREN_DER, CORCHETE_IZQ, CORCHETE_DER, COMA;
+terminal String ID, CTE_E, CTE_F, CTE_STR;
+
+/* Tokens del léxico que no aparecen en ninguna regla: si llegan al parser dan error sintáctico */
+terminal String THEN, LLAVE_IZQ, LLAVE_DER, PUNTO_Y_COMA;
+
+/* =========================== No terminales ========================== */
+
+non terminal programa, seccion_declaracion, lista_declaraciones, declaracion;
+non terminal Sintactico.Declaracion asignacion_tipos;
+non terminal String tipo;
+non terminal seccion_programa, bloque, sentencia, asignacion, salida, seleccion, iteracion;
+non terminal condicion, comparacion, comparador, expresion, termino, factor;
+non terminal aplicar_descuento;
+non terminal String porcentaje, precio;
+non terminal ArrayList<String> lista_precios;
+
+start with programa;
+
+/* ============================== Reglas ============================== */
+
+/* ---- Estructura del programa ---- */
+
+programa ::= seccion_declaracion:s seccion_programa
+        {: parser.regla(1, sleft, "<programa> ::= <seccion_declaracion> <seccion_programa>"); :}
+    | seccion_programa:s
+        {: parser.regla(2, sleft, "<programa> ::= <seccion_programa>"); :}
+    ;
+
+/* ---- Sección de declaraciones ---- */
+
+seccion_declaracion ::= DECLARE_SECTION:d lista_declaraciones ENDDECLARE_SECTION
+        {: parser.regla(3, dleft, "<seccion_declaracion> ::= DECLARE_SECTION <lista_declaraciones> ENDDECLARE_SECTION"); :}
+    ;
+
+lista_declaraciones ::= lista_declaraciones declaracion:d
+        {: parser.regla(4, dleft, "<lista_declaraciones> ::= <lista_declaraciones> <declaracion>"); :}
+    | declaracion:d
+        {: parser.regla(5, dleft, "<lista_declaraciones> ::= <declaracion>"); :}
+    ;
+
+declaracion ::= CORCHETE_IZQ:c asignacion_tipos:a CORCHETE_DER
+        {: parser.regla(6, cleft, "<declaracion> ::= CORCHETE_IZQ <asignacion_tipos> CORCHETE_DER");
+           parser.declarar(cleft, a); :}
+    ;
+
+/* Recursión al centro: misma cantidad de variables que de tipos.
+   La regla 7 empareja el primer ID con el último tipo, por eso los ID
+   se insertan al principio y los tipos al final de cada lista. */
+asignacion_tipos ::= ID:id COMA asignacion_tipos:a COMA tipo:t
+        {: parser.regla(7, idleft, "<asignacion_tipos> ::= ID COMA <asignacion_tipos> COMA <tipo>");
+           a.ids.add(0, id); a.tipos.add(t); RESULT = a; :}
+    | ID:id CORCHETE_DER OP_DECL_TIPO CORCHETE_IZQ tipo:t
+        {: parser.regla(8, idleft, "<asignacion_tipos> ::= ID CORCHETE_DER OP_DECL_TIPO CORCHETE_IZQ <tipo>");
+           RESULT = new Sintactico.Declaracion(); RESULT.ids.add(id); RESULT.tipos.add(t); :}
+    ;
+
+tipo ::= INT:t
+        {: parser.regla(9, tleft, "<tipo> ::= INT"); RESULT = "INT"; :}
+    | FLOAT:t
+        {: parser.regla(10, tleft, "<tipo> ::= FLOAT"); RESULT = "FLOAT"; :}
+    | STRING:t
+        {: parser.regla(11, tleft, "<tipo> ::= STRING"); RESULT = "STRING"; :}
+    ;
+
+/* ---- Sección de programa y sentencias ---- */
+
+seccion_programa ::= PROGRAM_SECTION:p bloque ENDPROGRAM_SECTION
+        {: parser.regla(12, pleft, "<seccion_programa> ::= PROGRAM_SECTION <bloque> ENDPROGRAM_SECTION"); :}
+    ;
+
+/* En las reglas recursivas a izquierda se informa la línea del elemento nuevo */
+bloque ::= bloque sentencia:s
+        {: parser.regla(13, sleft, "<bloque> ::= <bloque> <sentencia>"); :}
+    | sentencia:s
+        {: parser.regla(14, sleft, "<bloque> ::= <sentencia>"); :}
+    ;
+
+sentencia ::= asignacion:s
+        {: parser.regla(15, sleft, "<sentencia> ::= <asignacion>"); :}
+    | salida:s
+        {: parser.regla(16, sleft, "<sentencia> ::= <salida>"); :}
+    | seleccion:s
+        {: parser.regla(17, sleft, "<sentencia> ::= <seleccion>"); :}
+    | iteracion:s
+        {: parser.regla(18, sleft, "<sentencia> ::= <iteracion>"); :}
+    | aplicar_descuento:s
+        {: parser.regla(19, sleft, "<sentencia> ::= <aplicar_descuento>"); :}
+    ;
+
+/* ---- Asignación y salida ---- */
+
+asignacion ::= ID:id OP_ASIGNACION expresion
+        {: parser.regla(20, idleft, "<asignacion> ::= ID OP_ASIGNACION <expresion>"); :}
+    | ID:id OP_ASIGNACION CTE_STR
+        {: parser.regla(21, idleft, "<asignacion> ::= ID OP_ASIGNACION CTE_STR"); :}
+    ;
+
+salida ::= WRITE:w CTE_STR
+        {: parser.regla(22, wleft, "<salida> ::= WRITE CTE_STR"); :}
+    | WRITE:w ID
+        {: parser.regla(23, wleft, "<salida> ::= WRITE ID"); :}
+    | WRITE:w CTE_E
+        {: parser.regla(24, wleft, "<salida> ::= WRITE CTE_E"); :}
+    | WRITE:w CTE_F
+        {: parser.regla(25, wleft, "<salida> ::= WRITE CTE_F"); :}
+    ;
+
+/* ---- Decisión y ciclo ---- */
+
+seleccion ::= IF:i PAREN_IZQ condicion PAREN_DER bloque ENDIF
+        {: parser.regla(26, ileft, "<seleccion> ::= IF PAREN_IZQ <condicion> PAREN_DER <bloque> ENDIF"); :}
+    | IF:i PAREN_IZQ condicion PAREN_DER bloque ELSE bloque ENDIF
+        {: parser.regla(27, ileft, "<seleccion> ::= IF PAREN_IZQ <condicion> PAREN_DER <bloque> ELSE <bloque> ENDIF"); :}
+    ;
+
+iteracion ::= WHILE:w PAREN_IZQ condicion PAREN_DER bloque ENDWHILE
+        {: parser.regla(28, wleft, "<iteracion> ::= WHILE PAREN_IZQ <condicion> PAREN_DER <bloque> ENDWHILE"); :}
+    ;
+
+/* ---- Condiciones ---- */
+
+condicion ::= comparacion:c
+        {: parser.regla(29, cleft, "<condicion> ::= <comparacion>"); :}
+    | PAREN_IZQ:p comparacion PAREN_DER AND PAREN_IZQ comparacion PAREN_DER
+        {: parser.regla(30, pleft, "<condicion> ::= PAREN_IZQ <comparacion> PAREN_DER AND PAREN_IZQ <comparacion> PAREN_DER"); :}
+    | PAREN_IZQ:p comparacion PAREN_DER OR PAREN_IZQ comparacion PAREN_DER
+        {: parser.regla(31, pleft, "<condicion> ::= PAREN_IZQ <comparacion> PAREN_DER OR PAREN_IZQ <comparacion> PAREN_DER"); :}
+    ;
+
+comparacion ::= expresion:e comparador expresion
+        {: parser.regla(32, eleft, "<comparacion> ::= <expresion> <comparador> <expresion>"); :}
+    ;
+
+comparador ::= OP_MENOR:o
+        {: parser.regla(33, oleft, "<comparador> ::= OP_MENOR"); :}
+    | OP_MENOR_IGUAL:o
+        {: parser.regla(34, oleft, "<comparador> ::= OP_MENOR_IGUAL"); :}
+    | OP_MAYOR:o
+        {: parser.regla(35, oleft, "<comparador> ::= OP_MAYOR"); :}
+    | OP_MAYOR_IGUAL:o
+        {: parser.regla(36, oleft, "<comparador> ::= OP_MAYOR_IGUAL"); :}
+    | OP_IGUAL:o
+        {: parser.regla(37, oleft, "<comparador> ::= OP_IGUAL"); :}
+    | OP_DISTINTO:o
+        {: parser.regla(38, oleft, "<comparador> ::= OP_DISTINTO"); :}
+    ;
+
+/* ---- Expresiones aritméticas ---- */
+
+expresion ::= expresion:e OP_SUMA termino
+        {: parser.regla(39, eleft, "<expresion> ::= <expresion> OP_SUMA <termino>"); :}
+    | expresion:e OP_RESTA termino
+        {: parser.regla(40, eleft, "<expresion> ::= <expresion> OP_RESTA <termino>"); :}
+    | termino:t
+        {: parser.regla(41, tleft, "<expresion> ::= <termino>"); :}
+    ;
+
+termino ::= termino:t OP_MULT factor
+        {: parser.regla(42, tleft, "<termino> ::= <termino> OP_MULT <factor>"); :}
+    | termino:t OP_DIV factor
+        {: parser.regla(43, tleft, "<termino> ::= <termino> OP_DIV <factor>"); :}
+    | factor:f
+        {: parser.regla(44, fleft, "<termino> ::= <factor>"); :}
+    ;
+
+factor ::= ID:x
+        {: parser.regla(45, xleft, "<factor> ::= ID"); :}
+    | CTE_E:x
+        {: parser.regla(46, xleft, "<factor> ::= CTE_E"); :}
+    | CTE_F:x
+        {: parser.regla(47, xleft, "<factor> ::= CTE_F"); :}
+    | PAREN_IZQ:x expresion PAREN_DER
+        {: parser.regla(48, xleft, "<factor> ::= PAREN_IZQ <expresion> PAREN_DER"); :}
+    ;
+
+/* ---- Tema especial: APLICARDESCUENTO ---- */
+
+aplicar_descuento ::= APLICARDESCUENTO:a PAREN_IZQ porcentaje:p COMA CORCHETE_IZQ lista_precios:l CORCHETE_DER PAREN_DER
+        {: parser.regla(49, aleft, "<aplicar_descuento> ::= APLICARDESCUENTO PAREN_IZQ <porcentaje> COMA CORCHETE_IZQ <lista_precios> CORCHETE_DER PAREN_DER");
+           parser.aplicarDescuento(aleft, p, l); :}
+    ;
+
+porcentaje ::= CTE_E:x
+        {: parser.regla(50, xleft, "<porcentaje> ::= CTE_E"); RESULT = x; :}
+    | CTE_F:x
+        {: parser.regla(51, xleft, "<porcentaje> ::= CTE_F"); RESULT = x; :}
+    ;
+
+lista_precios ::= lista_precios:l COMA precio:p
+        {: parser.regla(52, lleft, "<lista_precios> ::= <lista_precios> COMA <precio>");
+           l.add(p); RESULT = l; :}
+    | precio:p
+        {: parser.regla(53, pleft, "<lista_precios> ::= <precio>");
+           RESULT = new ArrayList<String>(); RESULT.add(p); :}
+    ;
+
+precio ::= CTE_E:x
+        {: parser.regla(54, xleft, "<precio> ::= CTE_E"); RESULT = x; :}
+    | CTE_F:x
+        {: parser.regla(55, xleft, "<precio> ::= CTE_F"); RESULT = x; :}
+    ;
